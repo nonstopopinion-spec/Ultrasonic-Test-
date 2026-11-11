@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NETRAX | LIVE SENSOR</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #050b09;
+    color: #00ff9d;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 25px 15px;
+}
+
+h1 {
+    letter-spacing: 5px;
+    font-size: 32px;
+    text-shadow: 0 0 15px #00ff9d66;
+}
+
+.sub {
+    color: #789b8b;
+    letter-spacing: 3px;
+    font-size: 12px;
+}
+
+.panel {
+    max-width: 430px;
+    margin: 30px auto;
+    padding: 25px;
+    border: 1px solid #00ff9d;
+    border-radius: 15px;
+    background: #07130f;
+    box-shadow: 0 0 20px #00ff9d22;
+}
+
+.label {
+    color: #8aa99b;
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+.distance {
+    font-size: 65px;
+    font-weight: bold;
+    margin: 20px 0;
+    text-shadow: 0 0 15px #00ff9d55;
+}
+
+.status {
+    padding: 15px;
+    border: 1px solid #00ff9d;
+    border-radius: 8px;
+    font-size: 18px;
+    margin-top: 20px;
+}
+
+.red {
+    color: #ff4545;
+    border-color: #ff4545;
+    box-shadow: 0 0 15px #ff454522;
+}
+
+.green {
+    color: #00ff9d;
+    border-color: #00ff9d;
+}
+
+button {
+    background: #00ff9d;
+    color: #00150c;
+    border: 0;
+    padding: 14px 28px;
+    border-radius: 6px;
+    font-weight: bold;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+}
+
+.small {
+    color: #668477;
+    font-size: 12px;
+    margin-top: 25px;
+}
+
+#connection {
+    margin-top: 20px;
+    letter-spacing: 1px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>NETRAX</h1>
+
+<div class="sub">
+ULTRASONIC DETECTION SYSTEM
+</div>
+
+<div class="panel">
+
+    <div class="label">LIVE DISTANCE</div>
+
+    <div class="distance" id="distance">
+        -- cm
+    </div>
+
+    <div class="label">
+        DETECTION RANGE: 15 CM
+    </div>
+
+    <div class="status" id="status">
+        WAITING FOR SENSOR
+    </div>
+
+    <p class="small">SENSOR: HC-SR04</p>
+    <p class="small">SYSTEM: ARDUINO UNO</p>
+    <p class="small">MODE: FIXED SENSOR</p>
+
+</div>
+
+<button id="connectButton" onclick="connectSensor()">
+CONNECT SENSOR
+</button>
+
+<div class="small" id="connection">
+PYTHON BRIDGE: DISCONNECTED
+</div>
+
+<script>
+
+let updateTimer = null;
+
+const API = "http://127.0.0.1:8765/distance";
+
+async function connectSensor() {
+
+    const connection = document.getElementById("connection");
+    const button = document.getElementById("connectButton");
+
+    button.disabled = true;
+    connection.innerText = "CONNECTING...";
+
+    try {
+
+        const response = await fetch(API, {
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error("Server error");
+        }
+
+        const data = await response.json();
+
+        showDistance(data.distance);
+
+        connection.innerText = "PYTHON BRIDGE: CONNECTED";
+
+        if (updateTimer) {
+            clearInterval(updateTimer);
+        }
+
+        updateTimer = setInterval(updateDistance, 500);
+
+    } catch (error) {
+
+        connection.innerText = "CONNECTION FAILED";
+
+        alert(
+            "Python Bridge connect nahi hua!\n\n" +
+            "Check karo:\n" +
+            "1. Termux bridge running hai?\n" +
+            "2. USB Serial Server START hai?\n" +
+            "3. Browser localhost connection allow kar raha hai?"
+        );
+
+    }
+
+    button.disabled = false;
+}
+
+async function updateDistance() {
+
+    const connection = document.getElementById("connection");
+
+    try {
+
+        const response = await fetch(API, {
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error("API unavailable");
+        }
+
+        const data = await response.json();
+
+        showDistance(data.distance);
+
+        connection.innerText = "PYTHON BRIDGE: CONNECTED";
+
+    } catch (error) {
+
+        connection.innerText = "PYTHON BRIDGE: DISCONNECTED";
+
+        clearInterval(updateTimer);
+        updateTimer = null;
+
+    }
+}
+
+function showDistance(d) {
+
+    const distance = document.getElementById("distance");
+    const status = document.getElementById("status");
+
+    if (!Number.isFinite(d) || d <= 0) {
+
+        distance.innerText = "-- cm";
+        status.innerText = "NO OBJECT";
+        status.className = "status green";
+
+        return;
+    }
+
+    distance.innerText = d.toFixed(1) + " cm";
+
+    if (d <= 15) {
+
+        status.innerText = "OBJECT DETECTED";
+        status.className = "status red";
+
+    } else {
+
+        status.innerText = "CLEAR";
+        status.className = "status green";
+
+    }
+}
+
+</script>
+
+</body>
+</html>
