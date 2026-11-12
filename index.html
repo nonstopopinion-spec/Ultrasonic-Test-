@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NETRAX | RADAR SYSTEM</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 25px 15px;
+    background: #030907;
+    color: #00ff9d;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+h1 {
+    font-size: 34px;
+    letter-spacing: 7px;
+    text-shadow: 0 0 15px #00ff9d;
+}
+
+.sub {
+    color: #789b8b;
+    letter-spacing: 3px;
+    font-size: 11px;
+}
+
+.panel {
+    max-width: 430px;
+    margin: 25px auto;
+    padding: 22px;
+    background: #07130f;
+    border: 1px solid #00ff9d;
+    border-radius: 15px;
+    box-shadow: 0 0 25px #00ff9d22;
+}
+
+.label {
+    color: #8aa99b;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+.distance {
+    font-size: 58px;
+    font-weight: bold;
+    margin: 15px 0;
+    text-shadow: 0 0 15px #00ff9d66;
+}
+
+/* RADAR */
+
+.radar {
+    width: 280px;
+    height: 280px;
+    margin: 25px auto;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #00ff9d88;
+    border-radius: 50%;
+
+    background:
+        linear-gradient(90deg, transparent 49.7%, #00ff9d33 50%, transparent 50.3%),
+        linear-gradient(transparent 49.7%, #00ff9d33 50%, transparent 50.3%),
+        radial-gradient(circle, #063322, #03100b);
+    
+    box-shadow: 0 0 25px #00ff9d22;
+}
+
+.ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 1px solid #00ff9d55;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ring1 { width: 25%; height: 25%; }
+.ring2 { width: 50%; height: 50%; }
+.ring3 { width: 75%; height: 75%; }
+
+.sweep {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 0;
+    left: 50%;
+    transform-origin: bottom left;
+    background: conic-gradient(
+        from 270deg,
+        transparent 0deg,
+        #00ff9d55 35deg,
+        transparent 65deg
+    );
+    animation: rotateRadar 3s linear infinite;
+}
+
+@keyframes rotateRadar {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.sensor-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #00ff9d;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 15px #00ff9d;
+}
+
+.object-dot {
+    position: absolute;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    display: none;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #00ff9d;
+    box-shadow: 0 0 15px #00ff9d;
+}
+
+.radar-label {
+    position: absolute;
+    bottom: 12px;
+    width: 100%;
+    font-size: 9px;
+    letter-spacing: 3px;
+}
+
+/* STATUS */
+
+.status {
+    padding: 15px;
+    border: 1px solid #00ff9d;
+    border-radius: 8px;
+    margin-top: 18px;
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.green {
+    color: #00ff9d;
+}
+
+.red {
+    color: #ff4545;
+    border-color: #ff4545;
+    box-shadow: 0 0 15px #ff454533;
+}
+
+button {
+    padding: 13px 22px;
+    margin: 8px;
+    background: #00ff9d;
+    color: #00150c;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+}
+
+.small {
+    color: #668477;
+    font-size: 11px;
+    margin-top: 18px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>NETRAX</h1>
+
+<div class="sub">
+ADVANCED RADAR DETECTION SYSTEM
+</div>
+
+<div class="panel">
+
+    <div class="label">LIVE DISTANCE</div>
+
+    <div class="distance" id="distance">-- cm</div>
+
+    <div class="radar">
+
+        <div class="sweep"></div>
+
+        <div class="ring ring1"></div>
+        <div class="ring ring2"></div>
+        <div class="ring ring3"></div>
+
+        <div class="sensor-dot"></div>
+        <div class="object-dot" id="objectDot"></div>
+
+        <div class="radar-label">LIVE RADAR</div>
+
+    </div>
+
+    <div class="label">DETECTION RANGE: 15 CM</div>
+
+    <div class="status green" id="status">
+        WAITING FOR SENSOR
+    </div>
+
+    <p class="small">SENSOR: HC-SR04</p>
+    <p class="small">SYSTEM: ARDUINO UNO</p>
+    <p class="small">MODE: FIXED SENSOR</p>
+
+</div>
+
+<button id="connectButton" onclick="connectSensor()">
+CONNECT SENSOR
+</button>
+
+<button id="muteButton" onclick="toggleMute()">
+MUTE SOUND
+</button>
+
+<div class="small" id="connection">
+PYTHON BRIDGE: DISCONNECTED
+</div>
+
+<div class="small" id="audioStatus">
+AUDIO ALERT: READY
+</div>
+
+<script>
+
+const API = "http://127.0.0.1:8765/distance";
+
+let updateTimer = null;
+let audioContext = null;
+let beepTimer = null;
+let muted = false;
+let detected = false;
+
+async function connectSensor() {
+
+    const connection = document.getElementById("connection");
+
+    try {
+
+        // Audio permission through button click
+        const AudioContext =
+            window.AudioContext || window.webkitAudioContext;
+
+        if (!audioContext && AudioContext) {
+            audioContext = new AudioContext();
+        }
+
+        if (audioContext) {
+            await audioContext.resume();
+        }
+
+        connection.innerText = "CONNECTING...";
+
+        const response = await fetch(API, {
+            cache: "no-store"
+        });
+
+        if (!response.ok) throw new Error();
+
+        const data = await response.json();
+
+        showDistance(data.distance);
+
+        connection.innerText = "PYTHON BRIDGE: CONNECTED";
+
+        if (updateTimer) {
+            clearInterval(updateTimer);
+        }
+
+        updateTimer = setInterval(updateDistance, 500);
+
+    } catch (error) {
+
+        connection.innerText = "CONNECTION FAILED";
+
+        alert(
+            "Python Bridge connection failed.\n" +
+            "Check Termux and USB Serial Server."
+        );
+
+    }
+}
+
+async function updateDistance() {
+
+    try {
+
+        const response = await fetch(API, {
+            cache: "no-store"
+        });
+
+        if (!response.ok) throw new Error();
+
+        const data = await response.json();
+
+        showDistance(data.distance);
+
+        document.getElementById("connection").innerText =
+            "PYTHON BRIDGE: CONNECTED";
+
+    } catch (error) {
+
+        document.getElementById("connection").innerText =
+            "PYTHON BRIDGE: DISCONNECTED";
+
+        clearInterval(updateTimer);
+        updateTimer = null;
+
+        stopBeep();
+    }
+}
+
+function showDistance(d) {
+
+    const distance = document.getElementById("distance");
+    const status = document.getElementById("status");
+    const dot = document.getElementById("objectDot");
+
+    if (!Number.isFinite(d) || d <= 0) {
+
+        distance.innerText = "-- cm";
+        status.innerText = "NO OBJECT";
+        status.className = "status green";
+
+        dot.style.display = "none";
+
+        detected = false;
+        stopBeep();
+
+        return;
+    }
+
+    distance.innerText = d.toFixed(1) + " cm";
+
+    // Radar marker: distance only, not direction
+    const radius = Math.min(d, 100) * 1.15;
+
+    dot.style.display = "block";
+    dot.style.top = (140 - radius) + "px";
+
+    if (d <= 15) {
+
+        status.innerText = "OBJECT DETECTED";
+        status.className = "status red";
+
+        dot.style.background = "#ff4545";
+        dot.style.boxShadow = "0 0 18px #ff4545";
+
+        detected = true;
+        startBeep();
+
+    } else {
+
+        status.innerText = "CLEAR";
+        status.className = "status green";
+
+        dot.style.background = "#00ff9d";
+        dot.style.boxShadow = "0 0 15px #00ff9d";
+
+        detected = false;
+        stopBeep();
+    }
+}
+
+// PHONE AUDIO ALERT
+
+function playBeep() {
+
+    if (!audioContext || muted || !detected) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = 850;
+
+    gain.gain.setValueAtTime(0.12, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + 0.15
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.15);
+}
+
+function startBeep() {
+
+    if (muted || beepTimer || !audioContext) return;
+
+    document.getElementById("audioStatus").innerText =
+        "AUDIO ALERT: OBJECT DETECTED";
+
+    playBeep();
+
+    beepTimer = setInterval(playBeep, 450);
+}
+
+function stopBeep() {
+
+    if (beepTimer) {
+        clearInterval(beepTimer);
+        beepTimer = null;
+    }
+
+    document.getElementById("audioStatus").innerText =
+        muted ? "AUDIO ALERT: MUTED" : "AUDIO ALERT: READY";
+}
+
+function toggleMute() {
+
+    muted = !muted;
+
+    document.getElementById("muteButton").innerText =
+        muted ? "UNMUTE SOUND" : "MUTE SOUND";
+
+    if (muted) {
+        stopBeep();
+    } else if (detected) {
+        startBeep();
+    }
+}
+
+</script>
+
+</body>
+  </html>
