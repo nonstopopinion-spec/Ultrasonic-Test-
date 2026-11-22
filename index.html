@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NETRAX | Advanced Radar</title>
+
+<style>
+:root {
+ --bg:#080b16;
+ --panel:#11182a;
+ --cyan:#00e5ff;
+ --blue:#387bff;
+ --purple:#a855f7;
+ --green:#00f5a0;
+ --red:#ff3158;
+ --orange:#ffae42;
+ --white:#f3f6ff;
+ --muted:#8490aa;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+ background:
+ radial-gradient(circle at 10% 0%,#15254b 0,transparent 35%),
+ radial-gradient(circle at 90% 20%,#32134d 0,transparent 30%),
+ var(--bg);
+ color:var(--white);
+ font-family:Arial,sans-serif;
+ min-height:100vh;
+ padding:18px;
+}
+
+header{
+ max-width:1100px;
+ margin:auto;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:15px;
+ padding:12px 4px 22px;
+ border-bottom:1px solid #29334b;
+}
+
+.brand{
+ display:flex;
+ align-items:center;
+ gap:12px;
+}
+
+.logo{
+ width:55px;
+ height:55px;
+}
+
+.brand h1{
+ font-size:28px;
+ letter-spacing:5px;
+ background:linear-gradient(90deg,var(--cyan),var(--purple));
+ -webkit-background-clip:text;
+ color:transparent;
+}
+
+.brand p{
+ font-size:10px;
+ letter-spacing:3px;
+ color:var(--muted);
+ margin-top:5px;
+}
+
+.online{
+ border:1px solid #00f5a055;
+ background:#00f5a014;
+ padding:10px 15px;
+ border-radius:30px;
+ color:var(--green);
+ font-size:12px;
+}
+
+.container{
+ max-width:1100px;
+ margin:22px auto;
+}
+
+.section-title{
+ font-size:19px;
+ margin-bottom:15px;
+}
+
+.section-title span{color:var(--cyan)}
+
+.grid{
+ display:grid;
+ grid-template-columns:1.6fr 1fr;
+ gap:17px;
+}
+
+.card{
+ background:linear-gradient(145deg,#151e32,#0e1423);
+ border:1px solid #34405a;
+ border-radius:17px;
+ padding:18px;
+ box-shadow:0 10px 35px #0005;
+}
+
+.card-head{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:15px;
+ font-size:13px;
+ color:#c4cee5;
+}
+
+.tag{
+ color:var(--cyan);
+ font-size:10px;
+ letter-spacing:1px;
+}
+
+canvas{
+ width:100%;
+ display:block;
+}
+
+.metrics{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:13px;
+}
+
+.metric{
+ background:#0a1020;
+ border:1px solid #35415d;
+ border-radius:13px;
+ padding:18px 12px;
+}
+
+.metric small{
+ color:var(--muted);
+ font-size:10px;
+ letter-spacing:1.5px;
+}
+
+.metric h2{
+ font-size:27px;
+ margin-top:12px;
+}
+
+.cyan{color:var(--cyan)}
+.purple{color:var(--purple)}
+.green{color:var(--green)}
+.orange{color:var(--orange)}
+
+.status{
+ margin-top:15px;
+ border:1px solid var(--green);
+ background:#00f5a012;
+ color:var(--green);
+ padding:17px;
+ border-radius:12px;
+ text-align:center;
+ font-weight:bold;
+ letter-spacing:2px;
+}
+
+.status.danger{
+ color:var(--red);
+ border-color:var(--red);
+ background:#ff31581a;
+}
+
+.status.warning{
+ color:var(--orange);
+ border-color:var(--orange);
+ background:#ffae4215;
+}
+
+.system{
+ margin-top:17px;
+}
+
+.system-row{
+ display:flex;
+ justify-content:space-between;
+ padding:14px 2px;
+ border-bottom:1px solid #29334b;
+ font-size:13px;
+}
+
+.system-row span:first-child{color:var(--muted)}
+.system-row span:last-child{color:var(--green)}
+
+footer{
+ max-width:1100px;
+ margin:35px auto 10px;
+ text-align:center;
+ padding:20px;
+ border-top:1px solid #29334b;
+ color:#aab5d0;
+ letter-spacing:4px;
+ font-size:12px;
+}
+
+footer strong{
+ background:linear-gradient(90deg,var(--cyan),var(--purple));
+ -webkit-background-clip:text;
+ color:transparent;
+}
+
+@media(max-width:750px){
+ .grid{grid-template-columns:1fr}
+ .brand h1{font-size:24px}
+ body{padding:12px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="brand">
+
+  <!-- NETRAX CUSTOM SVG LOGO -->
+  <svg class="logo" viewBox="0 0 100 100">
+   <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+     <stop offset="0%" stop-color="#00e5ff"/>
+     <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+   </defs>
+
+   <path d="M50 4 L92 28 L92 72 L50 96 L8 72 L8 28 Z"
+    fill="#101a30" stroke="url(#lg)" stroke-width="4"/>
+
+   <path d="M25 69 L25 31 L50 59 L75 31 L75 69"
+    fill="none" stroke="url(#lg)"
+    stroke-width="7" stroke-linecap="round"/>
+
+   <circle cx="50" cy="17" r="4" fill="#00e5ff"/>
+  </svg>
+
+  <div>
+   <h1>NETRAX</h1>
+   <p>ADVANCED DETECTION SYSTEM</p>
+  </div>
+ </div>
+
+ <div class="online" id="connection">● CONNECTING</div>
+</header>
+
+<div class="container">
+
+ <div class="grid">
+
+  <!-- RADAR -->
+  <section class="card">
+
+   <div class="card-head">
+    <span>◉ LIVE RADAR SCANNER</span>
+    <span class="tag">180° SCANNING</span>
+   </div>
+
+   <canvas id="radar" width="900" height="520"></canvas>
+
+   <div class="status" id="status">
+    WAITING FOR DATA
+   </div>
+
+  </section>
+
+  <!-- DATA -->
+  <section class="card">
+
+   <div class="card-head">
+    <span>LIVE TELEMETRY</span>
+    <span class="tag">REAL TIME</span>
+   </div>
+
+   <div class="metrics">
+
+    <div class="metric">
+     <small>SERVO ANGLE</small>
+     <h2 class="cyan" id="angle">--°</h2>
+    </div>
+
+    <div class="metric">
+     <small>DISTANCE</small>
+     <h2 class="purple" id="distance">-- cm</h2>
+    </div>
+
+    <div class="metric">
+     <small>SCAN RANGE</small>
+     <h2 class="green">180°</h2>
+    </div>
+
+    <div class="metric">
+     <small>DETECTION LIMIT</small>
+     <h2 class="orange">25 cm</h2>
+    </div>
+
+   </div>
+
+   <div class="system">
+
+    <div class="card-head">
+     <span>SYSTEM MONITOR</span>
+     <span class="tag">NETRAX CORE</span>
+    </div>
+
+    <div class="system-row">
+     <span>Arduino Bridge</span>
+     <span id="bridge">WAITING</span>
+    </div>
+
+    <div class="system-row">
+     <span>Ultrasonic Sensor</span>
+     <span id="sensor">WAITING</span>
+    </div>
+
+    <div class="system-row">
+     <span>Servo Scanner</span>
+     <span id="servo">WAITING</span>
+    </div>
+
+    <div class="system-row">
+     <span>Detection System</span>
+     <span id="detector">STANDBY</span>
+    </div>
+
+   </div>
+
+  </section>
+
+ </div>
+</div>
+
+<footer>
+ <strong>BUILD BY ARYAN</strong>
+ <p style="margin-top:9px;font-size:9px;letter-spacing:2px">
+ NETRAX TECHNOLOGY • LIVE RADAR INTERFACE
+ </p>
+</footer>
+
+<script>
+
+const canvas=document.getElementById("radar");
+const ctx=canvas.getContext("2d");
+
+let angle=90;
+let distance=null;
+let detected=false;
+let online=false;
+
+function drawRadar(){
+
+ const w=900,h=520;
+ const cx=450,cy=475;
+ const R=405;
+
+ const color=detected?"#ff3158":"#00f5a0";
+
+ ctx.clearRect(0,0,w,h);
+ ctx.fillStyle="#080e1b";
+ ctx.fillRect(0,0,w,h);
+
+ // Full radar area changes colour
+ ctx.beginPath();
+ ctx.moveTo(cx,cy);
+ ctx.arc(cx,cy,R,Math.PI,Math.PI*2);
+ ctx.closePath();
+
+ let gradient=ctx.createRadialGradient(cx,cy,10,cx,cy,R);
+
+ if(detected){
+  gradient.addColorStop(0,"#ff31585c");
+  gradient.addColorStop(1,"#ff315810");
+ }else{
+  gradient.addColorStop(0,"#00f5a045");
+  gradient.addColorStop(1,"#00f5a008");
+ }
+
+ ctx.fillStyle=gradient;
+ ctx.fill();
+
+ // Radar rings
+ for(let i=1;i<=4;i++){
+  ctx.beginPath();
+  ctx.arc(cx,cy,R*i/4,Math.PI,Math.PI*2);
+  ctx.strokeStyle=color;
+  ctx.globalAlpha=.55;
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+ }
+ ctx.globalAlpha=1;
+
+ // Distance labels
+ ctx.fillStyle="#9baac5";
+ ctx.font="15px Arial";
+ ctx.textAlign="center";
+
+ for(let i=1;i<=4;i++){
+  ctx.fillText((i*50)+"cm",cx,cy-R*i/4+20);
+ }
+
+ // Radar angle lines
+ for(let a=0;a<=180;a+=30){
+
+  let rad=Math.PI-a*Math.PI/180;
+  let x=cx+Math.cos(rad)*R;
+  let y=cy-Math.sin(rad)*R;
+
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(x,y);
+  ctx.strokeStyle="#7185a5";
+  ctx.globalAlpha=.4;
+  ctx.stroke();
+ }
+ ctx.globalAlpha=1;
+
+ // Servo scan line
+ let rad=Math.PI-angle*Math.PI/180;
+ let x=cx+Math.cos(rad)*R;
+ let y=cy-Math.sin(rad)*R;
+
+ ctx.beginPath();
+ ctx.moveTo(cx,cy);
+ ctx.lineTo(x,y);
+ ctx.strokeStyle=color;
+ ctx.lineWidth=5;
+ ctx.shadowBlur=22;
+ ctx.shadowColor=color;
+ ctx.stroke();
+ ctx.shadowBlur=0;
+
+ // Detection marker
+ if(detected && distance!==null){
+
+  let d=Math.min(distance,200)/200*R;
+
+  let dx=cx+Math.cos(rad)*d;
+  let dy=cy-Math.sin(rad)*d;
+
+  ctx.beginPath();
+  ctx.arc(dx,dy,12,0,Math.PI*2);
+  ctx.fillStyle="#ff3158";
+  ctx.shadowBlur=25;
+  ctx.shadowColor="#ff3158";
+  ctx.fill();
+  ctx.shadowBlur=0;
+ }
+
+ // Angle labels
+ ctx.fillStyle=color;
+ ctx.font="bold 17px Arial";
+
+ [0,30,60,90,120,150,180].forEach(a=>{
+  let r=Math.PI-a*Math.PI/180;
+  let tx=cx+Math.cos(r)*(R+28);
+  let ty=cy-Math.sin(r)*(R+28);
+  ctx.fillText(a+"°",tx,ty);
+ });
+
+ // Centre
+ ctx.beginPath();
+ ctx.arc(cx,cy,8,0,Math.PI*2);
+ ctx.fillStyle="#ffffff";
+ ctx.fill();
+}
+
+async function update(){
+
+ try{
+
+  const response=await fetch(
+   "http://127.0.0.1:8765/distance?t="+Date.now(),
+   {cache:"no-store"}
+  );
+
+  if(!response.ok)throw Error("Offline");
+
+  const data=await response.json();
+
+  online=true;
+
+  if(data.angle!==undefined && data.angle!==null){
+   angle=Number(data.angle);
+  }
+
+  distance=data.distance===null?null:Number(data.distance);
+
+  detected=
+   data.status==="OBJECT DETECTED" ||
+   (distance!==null && distance>0 && distance<=25);
+
+  document.getElementById("connection").textContent="● SYSTEM ONLINE";
+  document.getElementById("bridge").textContent="CONNECTED";
+  document.getElementById("sensor").textContent=distance===null?"NO ECHO":"ACTIVE";
+  document.getElementById("servo").textContent=angle+"°";
+  document.getElementById("detector").textContent=detected?"DETECTED":"CLEAR";
+
+  document.getElementById("angle").textContent=angle+"°";
+
+  document.getElementById("distance").textContent=
+   distance===null?"-- cm":distance.toFixed(1)+" cm";
+
+  let status=document.getElementById("status");
+
+  if(detected){
+   status.textContent="⚠ OBJECT DETECTED";
+   status.className="status danger";
+  }
+  else if(distance===null){
+   status.textContent="NO ECHO — SCANNING";
+   status.className="status warning";
+  }
+  else{
+   status.textContent="✓ AREA CLEAR";
+   status.className="status";
+  }
+
+  drawRadar();
+
+ }catch(e){
+
+  online=false;
+
+  document.getElementById("connection").textContent="● OFFLINE";
+  document.getElementById("bridge").textContent="DISCONNECTED";
+  document.getElementById("sensor").textContent="UNKNOWN";
+  document.getElementById("servo").textContent="UNKNOWN";
+  document.getElementById("detector").textContent="OFFLINE";
+
+  document.getElementById("status").textContent="WAITING FOR CONNECTION";
+  document.getElementById("status").className="status warning";
+ }
+}
+
+drawRadar();
+setInterval(update,150);
+
+</script>
+
+</body>
+     </html>
