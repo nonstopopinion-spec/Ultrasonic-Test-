@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NETRAX | LIVE RADAR</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #030807;
+    color: #00ff88;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    padding: 15px;
+}
+
+header {
+    text-align: center;
+    padding: 18px 0;
+    border-bottom: 1px solid #124d36;
+}
+
+header h1 {
+    font-size: 32px;
+    letter-spacing: 7px;
+    text-shadow: 0 0 15px #00ff88;
+}
+
+header p {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: #69aa8b;
+    margin-top: 7px;
+}
+
+.panel {
+    max-width: 850px;
+    margin: 20px auto;
+    background: #06110d;
+    border: 1px solid #145337;
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 0 25px #00ff8815;
+}
+
+.radar-title {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 12px;
+    color: #8cceac;
+}
+
+#connection {
+    color: #00ff88;
+}
+
+canvas {
+    width: 100%;
+    display: block;
+}
+
+.data {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.box {
+    background: #091b13;
+    border: 1px solid #155337;
+    border-radius: 10px;
+    text-align: center;
+    padding: 15px 5px;
+}
+
+.label {
+    font-size: 10px;
+    color: #76a88d;
+    letter-spacing: 1px;
+}
+
+.value {
+    font-size: 22px;
+    margin-top: 8px;
+    font-weight: bold;
+    color: #00ff88;
+}
+
+#statusBox {
+    text-align: center;
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #00ff88;
+    border-radius: 10px;
+    background: #00ff8810;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #00ff88;
+}
+
+.detected {
+    color: #ff3030 !important;
+    border-color: #ff3030 !important;
+    background: #ff000020 !important;
+    text-shadow: 0 0 12px red;
+}
+
+footer {
+    text-align: center;
+    margin: 25px 0 10px;
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: #8abda2;
+}
+
+@media(max-width:500px) {
+    header h1 {
+        font-size: 25px;
+    }
+
+    .value {
+        font-size: 17px;
+    }
+
+    .box {
+        padding: 12px 3px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>NETRAX</h1>
+    <p>ADVANCED LIVE RADAR SYSTEM</p>
+</header>
+
+<div class="panel">
+
+    <div class="radar-title">
+        <span>◉ LIVE SCANNING RADAR</span>
+        <span id="connection">CONNECTING...</span>
+    </div>
+
+    <canvas id="radar" width="800" height="460"></canvas>
+
+    <div class="data">
+
+        <div class="box">
+            <div class="label">SERVO ANGLE</div>
+            <div class="value" id="angle">--°</div>
+        </div>
+
+        <div class="box">
+            <div class="label">DISTANCE</div>
+            <div class="value" id="distance">-- cm</div>
+        </div>
+
+        <div class="box">
+            <div class="label">RANGE</div>
+            <div class="value">180°</div>
+        </div>
+
+    </div>
+
+    <div id="statusBox">WAITING FOR DATA...</div>
+
+</div>
+
+<footer>BUILD BY ARYAN</footer>
+
+<script>
+
+const canvas = document.getElementById("radar");
+const ctx = canvas.getContext("2d");
+
+let currentAngle = 90;
+let currentDistance = null;
+let detected = false;
+let connected = false;
+
+const maxRange = 200;
+
+function drawRadar() {
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const cx = w / 2;
+    const cy = h - 25;
+    const radius = Math.min(w * 0.45, h - 55);
+
+    ctx.clearRect(0, 0, w, h);
+
+    const green = "#00ff88";
+    const red = "#ff2525";
+
+    const mainColor = detected ? red : green;
+
+    // Background
+    ctx.fillStyle = "#020a07";
+    ctx.fillRect(0, 0, w, h);
+
+    // Full radar area: GREEN or RED
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, Math.PI, Math.PI * 2);
+    ctx.closePath();
+
+    const gradient = ctx.createRadialGradient(
+        cx, cy, 10,
+        cx, cy, radius
+    );
+
+    if (detected) {
+        gradient.addColorStop(0, "rgba(255,30,30,0.35)");
+        gradient.addColorStop(1, "rgba(255,0,0,0.10)");
+    } else {
+        gradient.addColorStop(0, "rgba(0,255,130,0.25)");
+        gradient.addColorStop(1, "rgba(0,255,100,0.08)");
+    }
+
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Radar rings
+    ctx.strokeStyle = mainColor;
+    ctx.lineWidth = 1;
+
+    for (let i = 1; i <= 4; i++) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * i / 4, Math.PI, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    // Radar angle lines
+    for (let a = 0; a <= 180; a += 30) {
+
+        const rad = Math.PI - (a * Math.PI / 180);
+
+        const x = cx + Math.cos(rad) * radius;
+        const y = cy - Math.sin(rad) * radius;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = mainColor;
+        ctx.globalAlpha = 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+
+    // Base line
+    ctx.beginPath();
+    ctx.moveTo(cx - radius, cy);
+    ctx.lineTo(cx + radius, cy);
+    ctx.strokeStyle = mainColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Angle labels
+    ctx.fillStyle = mainColor;
+    ctx.font = "15px Arial";
+    ctx.textAlign = "center";
+
+    [0, 30, 60, 90, 120, 150, 180].forEach(a => {
+
+        const rad = Math.PI - (a * Math.PI / 180);
+
+        const x = cx + Math.cos(rad) * (radius + 22);
+        const y = cy - Math.sin(rad) * (radius + 22);
+
+        ctx.fillText(a + "°", x, y);
+    });
+
+    // Live servo scan line
+    const rad = Math.PI - (currentAngle * Math.PI / 180);
+
+    const sx = cx + Math.cos(rad) * radius;
+    const sy = cy - Math.sin(rad) * radius;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(sx, sy);
+
+    ctx.strokeStyle = mainColor;
+    ctx.lineWidth = 4;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = mainColor;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Detection point
+    if (detected && currentDistance !== null) {
+
+        const r = Math.min(currentDistance, maxRange) / maxRange * radius;
+
+        const dx = cx + Math.cos(rad) * r;
+        const dy = cy - Math.sin(rad) * r;
+
+        ctx.beginPath();
+        ctx.arc(dx, dy, 10, 0, Math.PI * 2);
+        ctx.fillStyle = red;
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = red;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    // Center point
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = mainColor;
+    ctx.fill();
+}
+
+async function getData() {
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8765/distance?t=" + Date.now(),
+            {cache: "no-store"}
+        );
+
+        if (!response.ok) throw new Error("Connection failed");
+
+        const data = await response.json();
+
+        connected = true;
+
+        document.getElementById("connection").textContent =
+            "● ONLINE";
+
+        document.getElementById("connection").style.color =
+            "#00ff88";
+
+        if (data.angle !== undefined && data.angle !== null) {
+            currentAngle = Number(data.angle);
+        }
+
+        currentDistance = data.distance === null
+            ? null
+            : Number(data.distance);
+
+        detected =
+            data.status === "OBJECT DETECTED" ||
+            (currentDistance !== null &&
+             currentDistance > 0 &&
+             currentDistance <= 25);
+
+        document.getElementById("angle").textContent =
+            currentAngle + "°";
+
+        document.getElementById("distance").textContent =
+            currentDistance === null
+            ? "-- cm"
+            : currentDistance.toFixed(1) + " cm";
+
+        const statusBox = document.getElementById("statusBox");
+
+        if (detected) {
+
+            statusBox.textContent = "⚠ OBJECT DETECTED";
+            statusBox.classList.add("detected");
+
+        } else {
+
+            statusBox.textContent =
+                currentDistance === null
+                ? "NO ECHO"
+                : "✓ AREA CLEAR";
+
+            statusBox.classList.remove("detected");
+        }
+
+        drawRadar();
+
+    } catch (error) {
+
+        connected = false;
+
+        document.getElementById("connection").textContent =
+            "● OFFLINE";
+
+        document.getElementById("connection").style.color =
+            "red";
+
+        document.getElementById("statusBox").textContent =
+            "WAITING FOR NETRAX CONNECTION";
+
+    }
+}
+
+drawRadar();
+
+setInterval(getData, 150);
+
+</script>
+
+</body>
+</html>
