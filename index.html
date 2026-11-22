@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NETRAX RADAR</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ background:#050505;
+ color:#00ff66;
+ font-family:Arial;
+ text-align:center;
+ margin:0;
+}
+header{
+ padding:22px;
+ border-bottom:1px solid #00ff66;
+}
+h1{
+ letter-spacing:6px;
+ margin:5px;
+}
+p{color:#00aa44}
+.container{padding:15px}
+canvas{
+ width:100%;
+ max-width:550px;
+}
+.card{
+ border:1px solid #00ff66;
+ padding:17px;
+ margin:10px 0;
+ border-radius:8px;
+}
+.label{font-size:13px;color:#00aa44}
+.value{
+ font-size:28px;
+ margin-top:8px;
+}
+#status{font-size:17px}
+footer{
+ margin-top:30px;
+ padding:20px;
+ border-top:1px solid #00ff66;
+ letter-spacing:3px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>NETRAX</h1>
+<p>180° OBJECT DETECTION RADAR</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<div class="label">SYSTEM STATUS</div>
+<div class="value" id="status">CONNECTING...</div>
+</div>
+
+<canvas id="radar" width="600" height="340"></canvas>
+
+<div class="card">
+<div class="label">SERVO ANGLE</div>
+<div class="value" id="angle">0°</div>
+</div>
+
+<div class="card">
+<div class="label">DISTANCE</div>
+<div class="value" id="distance">-- cm</div>
+</div>
+
+<div class="card">
+<div class="label">OBJECT STATUS</div>
+<div class="value" id="object">WAITING</div>
+</div>
+
+</div>
+
+<footer>BUILD BY ARYAN</footer>
+
+<script>
+const canvas=document.getElementById("radar");
+const ctx=canvas.getContext("2d");
+
+let angle=0;
+let detected=false;
+
+function drawRadar(){
+ const cx=300,cy=300;
+
+ ctx.clearRect(0,0,600,340);
+
+ ctx.fillStyle=detected?
+ "rgba(255,0,0,0.18)":"rgba(0,255,80,0.12)";
+ ctx.fillRect(0,0,600,340);
+
+ ctx.strokeStyle="#00ff66";
+ ctx.lineWidth=2;
+
+ for(let r=65;r<=260;r+=65){
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,Math.PI,0);
+  ctx.stroke();
+ }
+
+ for(let a=0;a<=180;a+=30){
+  let rad=Math.PI-a*Math.PI/180;
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+260*Math.cos(rad),cy-260*Math.sin(rad));
+  ctx.stroke();
+ }
+
+ let rad=Math.PI-angle*Math.PI/180;
+
+ ctx.strokeStyle="#00ff66";
+ ctx.lineWidth=4;
+ ctx.beginPath();
+ ctx.moveTo(cx,cy);
+ ctx.lineTo(cx+260*Math.cos(rad),cy-260*Math.sin(rad));
+ ctx.stroke();
+
+ if(detected){
+  ctx.fillStyle="red";
+  ctx.beginPath();
+  ctx.arc(cx+170*Math.cos(rad),
+          cy-170*Math.sin(rad),9,0,Math.PI*2);
+  ctx.fill();
+ }
+}
+
+async function update(){
+ try{
+  const res=await fetch(
+   "http://127.0.0.1:8765/distance?t="+Date.now()
+  );
+
+  const data=await res.json();
+
+  angle=Number(data.angle)||0;
+  detected=data.status==="OBJECT DETECTED";
+
+  document.getElementById("angle").textContent=angle+"°";
+
+  document.getElementById("distance").textContent=
+   data.distance===null?"-- cm":
+   Number(data.distance).toFixed(1)+" cm";
+
+  document.getElementById("object").textContent=
+   detected?"DETECTED":"CLEAR";
+
+  document.getElementById("status").textContent=
+   detected?"OBJECT DETECTED":"SYSTEM ACTIVE";
+
+  drawRadar();
+
+ }catch(e){
+  document.getElementById("status").textContent="DISCONNECTED";
+ }
+}
+
+setInterval(update,200);
+drawRadar();
+</script>
+
+</body>
+</html>
